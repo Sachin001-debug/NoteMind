@@ -6,10 +6,40 @@ const Dashboard = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
 
+  const API = import.meta.env.VITE_API;
+
   const chats = [
     { id: 1, title: "Chat 1" },
     { id: 2, title: "Chat 2" },
   ];
+
+  const sendMessage = async()=>{
+      if(!input.trim()) return;
+
+      const userMessage = {
+        role: "user",
+        content: input
+      };
+      setMessages((prev)=> [...prev, userMessage]);
+
+      try{
+        const res = await fetch(`${API}/chat`, {
+          method: 'POST',
+          headers:{
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({message: input})
+        });
+
+        const data = await res.json();
+
+        const aiMessage = {role: 'assistant', content: data.response}
+        setMessages((prev)=>[...prev, aiMessage])
+      }catch(err){
+        console.log(err);
+      }
+      setInput("")
+  }
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -75,6 +105,17 @@ const Dashboard = () => {
               Start a conversation...
             </p>
           )}
+
+          {messages.map((msg, index)=>(
+            <div key={index}
+             className={`p-3 rounded  ${
+              msg.role === 'user'?
+              "bg-yellow-500 text-black ml-auto max-w-[35%]":
+              "bg-gray-700 text-white max-w-[70%]"
+             }`}>
+                  {msg.content}
+            </div>
+          ))}
         </div>
 
         {/* Input Area */}
@@ -95,7 +136,7 @@ const Dashboard = () => {
           />
 
           {/* Send */}
-          <button className="bg-yellow-500 text-white p-4 cursor-pointer rounded">
+          <button onClick={sendMessage} className="bg-yellow-500 text-white p-4 cursor-pointer rounded">
             <Send size={18} />
           </button>
         </div>
